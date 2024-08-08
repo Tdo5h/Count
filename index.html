@@ -40,11 +40,21 @@
             const count2Ref = database.ref('count2');
             const watchdogRef = database.ref('watchdog');
 
-            const fetchAndDisplayData = (countRef, elementId) => {
-                countRef.on('value', (snapshot) => {
-                    const countData = snapshot.val();
-                    watchdogRef.on('value', (watchdogSnapshot) => {
-                        const watchdogData = watchdogSnapshot.val();
+              // Function to fetch and display data
+    function fetchData() {
+        const count1Ref = database.ref('count1');
+        const count2Ref = database.ref('count2');
+        const watchdogRef = database.ref('watchdog');
+        const trip1Ref = database.ref('trip1');  // Add reference for trip1
+        const trip2Ref = database.ref('trip2');  // Add reference for trip2
+
+        const fetchAndDisplayData = (countRef, tripRef, elementId) => {
+            countRef.on('value', (snapshot) => {
+                const countData = snapshot.val();
+                watchdogRef.on('value', (watchdogSnapshot) => {
+                    const watchdogData = watchdogSnapshot.val();
+                    tripRef.on('value', (tripSnapshot) => {  // Fetch trip data
+                        const tripData = tripSnapshot.val();
                         let combinedData = [];
 
                         if (countData) {
@@ -52,6 +62,9 @@
                         }
                         if (watchdogData) {
                             combinedData = combinedData.concat(Object.values(watchdogData));
+                        }
+                        if (tripData) {  // Add trip data to combinedData
+                            combinedData = combinedData.concat(Object.values(tripData));
                         }
 
                         combinedData.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
@@ -70,11 +83,12 @@
                         document.getElementById(elementId).innerHTML = html;
                     });
                 });
-            };
+            });
+        };
 
-            fetchAndDisplayData(count1Ref, 'conveyor1');
-            fetchAndDisplayData(count2Ref, 'conveyor2');
-        }
+        fetchAndDisplayData(count1Ref, trip1Ref, 'conveyor1');  // Pass trip1Ref
+        fetchAndDisplayData(count2Ref, trip2Ref, 'conveyor2');  // Pass trip2Ref
+    }
 
         // Call fetchData on page load
         window.onload = fetchData;
