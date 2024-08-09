@@ -68,10 +68,8 @@
                             for (let i = 0; i < entries.length; i++) {
                                 const entry = entries[i];
                                 const date = new Date(entry.published_at);
-                                const nextDate = i < entries.length - 1 ? new Date(entries[i + 1].published_at) : new Date();
-                                const duration = new Date(nextDate - date).toISOString().substr(11, 8);
                                 html += `
-                                    <p>${i + 1}.(${date.toLocaleDateString()} ${date.toLocaleTimeString()}) - ${duration} - Count: ${entry.data}</p>
+                                    <p>${i + 1}.(${date.toLocaleDateString().substr(5)} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}) - Count: ${entry.data}</p>
                                 `;
                             }
                             document.getElementById(elementId).innerHTML = html;
