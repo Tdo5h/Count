@@ -8,12 +8,12 @@
 <body>
     <div style="float: right; width: 45%;">
         <h2>Conveyor 1 102</h2>
-        <button onclick="restoreData('conveyor1')">Restore Conveyor 1</button> <!-- Restore button for conveyor1 -->
+        <button onclick="restoreData('conveyor1')">Restore Conveyor 1</button>
         <div id="conveyor1"></div>
     </div>
     <div style="float: left; width: 45%;">
         <h2>Conveyor 2 110</h2>
-        <button onclick="restoreData('conveyor2')">Restore Conveyor 2</button> <!-- Restore button for conveyor2 -->
+        <button onclick="restoreData('conveyor2')">Restore Conveyor 2</button>
         <div id="conveyor2"></div>
     </div>
 
@@ -54,13 +54,13 @@
                             let combinedData = [];
 
                             if (countData) {
-                                combinedData = combinedData.concat(Object.values(countData));
+                                combinedData = combinedData.concat(Object.values(countData).map(item => ({...item, type: 'count'})));
                             }
                             if (watchdogData) {
-                                combinedData = combinedData.concat(Object.values(watchdogData));
+                                combinedData = combinedData.concat(Object.values(watchdogData).map(item => ({...item, type: 'watchdog'})));
                             }
                             if (tripData) {
-                                combinedData = combinedData.concat(Object.values(tripData));
+                                combinedData = combinedData.concat(Object.values(tripData).map(item => ({...item, type: 'trip'})));
                             }
 
                             combinedData.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
@@ -70,8 +70,14 @@
                             for (let i = 0; i < entries.length; i++) {
                                 const entry = entries[i];
                                 const date = new Date(entry.published_at);
+                                let style = '';
+                                if (entry.type === 'trip') {
+                                    style = 'font-weight: bold; color: darkgreen;';
+                                } else if (entry.type === 'watchdog') {
+                                    style = 'font-weight: bold;';
+                                }
                                 html += `
-                                    <p>${i + 1}.(${date.toLocaleDateString().substr(5)} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}) - Count: ${entry.data}</p>
+                                    <p style="${style}">${i + 1}.(${date.toLocaleDateString().substr(5)} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}) - Count: ${entry.data}</p>
                                 `;
                             }
                             document.getElementById(elementId).innerHTML = html;
