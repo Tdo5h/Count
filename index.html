@@ -3,9 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conveyor Data</title>
+    
+    <style>
+        body {
+            position: relative;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .status-dot {
+            height: 30px;
+            width: 30px;
+            border-radius: 50%;
+            position: fixed;
+            top: 2%;
+            left: 32%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            opacity: 0.3;
+        }
+        .status-dot.green { background-color: green; }
+        .status-dot.red { background-color: red; }
+        .content {
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+        }
+    </style>
 </head>
 <body>
+    <h1> <span id="statusDot" class="status-dot"></span></h1>
     <div style="float: right; width: 45%;">
         <h2>Conveyor 1 102</h2>
         <button onclick="restoreData('conveyor1')">Restore Conveyor 1</button>
@@ -35,6 +62,36 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+
+        let heartbeatInterval;
+
+        function updateStatusDot(isRunning) {
+            const statusDot = document.getElementById('statusDot');
+            if (isRunning) {
+                statusDot.className = 'status-dot green';
+            } else {
+                statusDot.className = 'status-dot red';
+            }
+        }
+
+        function toggleScriptRunningStatus() {
+            const scriptRunningRef = database.ref('scriptRunning');
+            
+            scriptRunningRef.set(true);
+
+            heartbeatInterval = setInterval(() => {
+                scriptRunningRef.set(true);
+            }, 30000);
+
+            window.addEventListener('beforeunload', () => {
+                clearInterval(heartbeatInterval);
+                scriptRunningRef.set(false);
+            });
+
+            scriptRunningRef.on('value', (snapshot) => {
+                updateStatusDot(snapshot.val());
+            });
+        }
 
         // Function to fetch and display data
         function fetchData() {
@@ -131,8 +188,23 @@
             });
         }
 
-        // Call fetchData on page load
-        window.onload = fetchData;
+        // Initialize on page load
+        window.onload = () => {
+            toggleScriptRunningStatus();
+            fetchData();
+        };
+
+        // Handle Firebase connection status
+        database.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                console.log('Connected to Firebase');
+                toggleScriptRunningStatus();
+            } else {
+                console.log('Disconnected from Firebase');
+                clearInterval(heartbeatInterval);
+                updateStatusDot(false);
+            }
+        });
     </script>
 </body>
 </html>
