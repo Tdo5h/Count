@@ -63,33 +63,34 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        let heartbeatInterval;
+        let lastUpdateTime = Date.now();
+        let checkInterval;
 
         function updateStatusDot(isRunning) {
             const statusDot = document.getElementById('statusDot');
-            if (isRunning) {
-                statusDot.className = 'status-dot green';
-            } else {
-                statusDot.className = 'status-dot red';
-            }
+            statusDot.className = isRunning ? 'status-dot green' : 'status-dot red';
         }
 
         function toggleScriptRunningStatus() {
             const scriptRunningRef = database.ref('scriptRunning');
             
-            scriptRunningRef.set(true);
-
-            heartbeatInterval = setInterval(() => {
-                scriptRunningRef.set(true);
-            }, 30000);
-
-            window.addEventListener('beforeunload', () => {
-                clearInterval(heartbeatInterval);
-                scriptRunningRef.set(false);
+            scriptRunningRef.on('value', (snapshot) => {
+                lastUpdateTime = Date.now();
+                updateStatusDot(true);
+                console.log('Script running value updated:', snapshot.val());
             });
 
-            scriptRunningRef.on('value', (snapshot) => {
-                updateStatusDot(snapshot.val());
+            checkInterval = setInterval(() => {
+                const timeSinceLastUpdate = Date.now() - lastUpdateTime;
+                if (timeSinceLastUpdate > 30000) {
+                    updateStatusDot(false);
+                    console.log('No update for 30 seconds, status dot set to red');
+                }
+            }, 1000);
+
+            window.addEventListener('beforeunload', () => {
+                clearInterval(checkInterval);
+                scriptRunningRef.off();
             });
         }
 
@@ -201,10 +202,23 @@
                 toggleScriptRunningStatus();
             } else {
                 console.log('Disconnected from Firebase');
-                clearInterval(heartbeatInterval);
+                clearInterval(checkInterval);
                 updateStatusDot(false);
             }
         });
+
+        // Test function to simulate updates (remove in production)
+        function testUpdate() {
+            const scriptRunningRef = database.ref('scriptRunning');
+            scriptRunningRef.set(Date.now());
+            console.log('Test update sent');
+        }
+
+        // Add a button to test updates (remove in production)
+        const testButton = document.createElement('button');
+        testButton.textContent = 'Test Update';
+        testButton.onclick = testUpdate;
+        document.body.appendChild(testButton);
     </script>
 </body>
 </html>
